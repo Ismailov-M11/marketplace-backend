@@ -2,6 +2,15 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 
 
+def _fix_db_url(url: str) -> str:
+    """Railway provides postgres:// or postgresql:// — convert to asyncpg dialect."""
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+    elif url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    return url
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
@@ -11,8 +20,12 @@ class Settings(BaseSettings):
     APP_DEBUG: bool = False
     APP_ALLOWED_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:5173"]
 
-    # Database
+    # Database — raw value from env, converted via property below
     DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost:5432/marketplace"
+
+    @property
+    def db_url(self) -> str:
+        return _fix_db_url(self.DATABASE_URL)
 
     # Redis
     REDIS_URL: str = "redis://localhost:6379/0"
