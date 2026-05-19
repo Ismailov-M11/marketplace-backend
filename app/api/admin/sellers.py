@@ -3,7 +3,7 @@ from sqlalchemy import func, select
 
 from app.api.deps import DB, CurrentAdmin, Paginate
 from app.core.exceptions import NotFoundError
-from app.core.security import create_access_token
+from app.core.security import create_access_token, generate_temp_password, hash_password
 from app.models.seller import Seller, SellerUser
 from app.schemas.common import PaginatedResponse
 from app.schemas.seller import SellerOut, SellerUpdate
@@ -96,7 +96,31 @@ async def impersonate_seller(seller_id: int, db: DB, admin: CurrentAdmin):
         raise NotFoundError("Seller owner not found")
 
     token = create_access_token({
-        "sub": owner.id, "type": "seller", "role": owner.role, "seller_id": seller_id,
+        "sub": str(owner.id), "type": "seller", "role": owner.role, "seller_id": seller_id,
         "impersonated_by": admin.id,
     })
     return {"access_token": token, "token_type": "bearer"}
+
+
+@router.post("/{seller_id}/reset-password")
+async def reset_seller_password(seller_id: int, db: DB, admin: CurrentAdmin, new_password: str = ""):
+    result = await db.execute(
+        select(SellerUser).where(
+            SellerUser.seller_id == seller_id,
+            SellerUser.role == "owner",
+            SellerUser.is_active == True,
+        )
+    )
+    owner = result.scalar_one_or_none()
+    if not owner:
+        raise NotFoundError("Seller owner not found")
+
+    password = new_password.strip() if new_password.strip() else generate_temp_password()
+    owner.password_hash = hash_password(password)
+    owner.must_change_password = not bool(new_password.strip())
+
+    return {
+        "email": owner.email,
+        "new_password": password,
+        "must_change_password": owner.must_change_password,
+    }
