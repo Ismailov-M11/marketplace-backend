@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query, UploadFile, File, status
 from sqlalchemy import func, select
-from python_slugify import slugify
+from slugify import slugify
 
 from app.api.deps import DB, CurrentSeller, CurrentSellerUser, Paginate
 from app.core.exceptions import ForbiddenError, NotFoundError
