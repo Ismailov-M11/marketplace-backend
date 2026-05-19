@@ -1,9 +1,13 @@
 from aiogram import Router, F
 from aiogram.filters import CommandStart
-from aiogram.types import KeyboardButton, Message, ReplyKeyboardMarkup
+from aiogram.types import (
+    InlineKeyboardButton, InlineKeyboardMarkup,
+    KeyboardButton, Message, ReplyKeyboardMarkup, WebAppInfo,
+)
 
 from app.models.seller import Seller
-from app.models.bot import BotSettings
+from app.models.bot import Bot, BotSettings
+from app.settings import settings
 
 router = Router()
 
@@ -26,14 +30,23 @@ def main_menu(lang: str = "uz") -> ReplyKeyboardMarkup:
     )
 
 
+def webapp_button(bot_id: int, lang: str = "uz") -> InlineKeyboardMarkup:
+    url = f"{settings.MINIAPP_URL.rstrip('/')}?bot_id={bot_id}"
+    label = "🛍 Do'konni ochish" if lang == "uz" else "🛍 Открыть магазин"
+    return InlineKeyboardMarkup(
+        inline_keyboard=[[InlineKeyboardButton(text=label, web_app=WebAppInfo(url=url))]]
+    )
+
+
 @router.message(CommandStart())
 async def cmd_start(
     message: Message,
     seller: Seller | None = None,
+    bot_obj: Bot | None = None,
     bot_settings: BotSettings | None = None,
     lang: str = "uz",
 ):
-    if not seller:
+    if not seller or not bot_obj:
         await message.answer("Bot is not configured yet.")
         return
 
@@ -45,3 +58,7 @@ async def cmd_start(
         welcome = f"Xush kelibsiz, {seller.display_name}!" if lang == "uz" else f"Добро пожаловать в {seller.display_name}!"
 
     await message.answer(welcome, reply_markup=main_menu(lang))
+    await message.answer(
+        "👇 Do'konni ochish uchun tugmani bosing:" if lang == "uz" else "👇 Нажмите кнопку, чтобы открыть магазин:",
+        reply_markup=webapp_button(bot_obj.id, lang),
+    )
