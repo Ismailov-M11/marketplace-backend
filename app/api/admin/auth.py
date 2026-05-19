@@ -59,7 +59,9 @@ async def admin_login(body: LoginRequest, request: Request, response: Response, 
 
     response.set_cookie(
         "refresh_token", raw_refresh,
-        httponly=True, samesite="lax", secure=not settings.is_development,
+        httponly=True,
+        samesite="none" if settings.SECURE_COOKIES else "lax",
+        secure=settings.SECURE_COOKIES,
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400,
     )
 
@@ -111,7 +113,9 @@ async def admin_refresh(request: Request, response: Response, db: DB):
 
     response.set_cookie(
         "refresh_token", new_raw,
-        httponly=True, samesite="lax", secure=not settings.is_development,
+        httponly=True,
+        samesite="none" if settings.SECURE_COOKIES else "lax",
+        secure=settings.SECURE_COOKIES,
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400,
     )
 

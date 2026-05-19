@@ -51,6 +51,9 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
 
+    # Cookies — set SECURE_COOKIES=true on Railway (HTTPS) so cookies work cross-origin
+    SECURE_COOKIES: bool = False
+
     # Encryption
     BOT_TOKEN_ENCRYPTION_KEY: str = ""
 
