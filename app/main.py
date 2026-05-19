@@ -71,7 +71,7 @@ async def generic_exception_handler(request: Request, exc: Exception):
 
 # ── Routers ───────────────────────────────────────────────────────────────────
 
-from app.api.public import health, applications as pub_applications
+from app.api.public import health, applications as pub_applications, setup as pub_setup
 from app.api.admin import auth as admin_auth, applications as admin_apps, sellers, bots
 from app.api.seller import auth as seller_auth, catalog, orders, settings as seller_settings, dashboard
 from app.api.miniapp import auth as miniapp_auth, catalog as miniapp_catalog, cart as miniapp_cart, checkout as miniapp_checkout, orders as miniapp_orders
@@ -81,6 +81,7 @@ PREFIX = "/api/v1"
 # Public
 app.include_router(health.router, prefix=f"{PREFIX}/public", tags=["Public"])
 app.include_router(pub_applications.router, prefix=f"{PREFIX}/public", tags=["Public"])
+app.include_router(pub_setup.router, prefix=f"{PREFIX}/public", tags=["Setup"])
 
 # Admin
 app.include_router(admin_auth.router, prefix=f"{PREFIX}/admin/auth", tags=["Admin Auth"])
