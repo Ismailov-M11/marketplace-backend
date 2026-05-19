@@ -107,7 +107,7 @@ async def approve_application(
     # Encrypt and save bot
     webhook_secret = generate_webhook_secret()
     from app.settings import settings
-    webhook_url = f"https://{settings.APP_ALLOWED_ORIGINS[0].replace('http://', '').replace('https://', '')}/webhook/{0}/{webhook_secret}"
+    webhook_url = f"https://{(settings.allowed_origins[0] if settings.allowed_origins else 'api.marketplace.uz').replace('http://', '').replace('https://', '')}/webhook/{0}/{webhook_secret}"
 
     bot = Bot(
         seller_id=seller.id,
@@ -149,7 +149,7 @@ async def approve_application(
     try:
         async with httpx.AsyncClient() as client:
             from app.settings import settings as s
-            base_url = s.APP_ALLOWED_ORIGINS[0] if s.APP_ALLOWED_ORIGINS else "https://api.marketplace.uz"
+            base_url = s.allowed_origins[0] if s.allowed_origins else "https://api.marketplace.uz"
             await client.post(
                 f"https://api.telegram.org/bot{body.telegram_token}/setWebhook",
                 json={"url": f"{base_url}/webhook/{bot.id}/{webhook_secret}", "secret_token": webhook_secret},

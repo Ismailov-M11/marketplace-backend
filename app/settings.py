@@ -1,17 +1,15 @@
 import json
 from functools import lru_cache
-from typing import Any
 
-from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 def _fix_db_url(url: str) -> str:
     """Railway provides postgres:// or postgresql:// — convert to asyncpg dialect."""
     if url.startswith("postgres://"):
-        url = url.replace("postgres://", "postgresql+asyncpg://", 1)
-    elif url.startswith("postgresql://"):
-        url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return url.replace("postgres://", "postgresql+asyncpg://", 1)
+    if url.startswith("postgresql://"):
+        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
     return url
 
 
@@ -22,25 +20,22 @@ class Settings(BaseSettings):
     APP_ENV: str = "development"
     APP_SECRET_KEY: str = "change-me"
     APP_DEBUG: bool = False
-    APP_ALLOWED_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:5173"]
 
-    @field_validator("APP_ALLOWED_ORIGINS", mode="before")
-    @classmethod
-    def parse_origins(cls, v: Any) -> list[str]:
-        if isinstance(v, list):
-            return v
-        if isinstance(v, str):
-            v = v.strip()
-            if not v:
-                return []
-            # Try JSON array first: ["url1","url2"]
-            if v.startswith("["):
-                return json.loads(v)
-            # Fallback: comma-separated string
-            return [o.strip() for o in v.split(",") if o.strip()]
-        return v
+    # Stored as plain str — pydantic-settings v2 JSON-decodes list[str] fields
+    # before validators run, which crashes on empty/non-JSON values.
+    APP_ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:5173"
+    MINIAPP_URL: str = "http://localhost:5174"
 
-    # Database — raw value from env, converted via property below
+    @property
+    def allowed_origins(self) -> list[str]:
+        v = self.APP_ALLOWED_ORIGINS.strip()
+        if not v:
+            return []
+        if v.startswith("["):
+            return json.loads(v)
+        return [o.strip() for o in v.split(",") if o.strip()]
+
+    # Database
     DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost:5432/marketplace"
 
     @property
@@ -87,9 +82,6 @@ class Settings(BaseSettings):
     CLICK_SECRET_KEY: str = ""
     PAYME_MERCHANT_ID: str = ""
     PAYME_SECRET_KEY: str = ""
-
-    # Mini App
-    MINIAPP_URL: str = "http://localhost:5174"
 
     @property
     def is_development(self) -> bool:
