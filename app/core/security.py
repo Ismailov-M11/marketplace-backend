@@ -3,10 +3,11 @@ import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
 
+import jwt as pyjwt
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from cryptography.fernet import Fernet
-from jose import JWTError, jwt
+from jwt.exceptions import PyJWTError as JWTError
 
 from app.settings import settings
 
@@ -34,7 +35,7 @@ def create_access_token(payload: dict, expires_delta: timedelta | None = None) -
     data = payload.copy()
     expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES))
     data.update({"exp": expire, "iat": datetime.now(timezone.utc), "jti": str(uuid.uuid4())})
-    return jwt.encode(data, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+    return pyjwt.encode(data, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
 def create_refresh_token() -> tuple[str, str]:
@@ -49,11 +50,11 @@ def hash_token(raw: str) -> str:
 
 
 def decode_token(token: str) -> dict:
-    return jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+    return pyjwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
 
 
 def decode_token_unverified(token: str) -> dict:
-    return jwt.get_unverified_claims(token)
+    return pyjwt.decode(token, options={"verify_signature": False}, algorithms=[settings.JWT_ALGORITHM])
 
 
 # ── Fernet encryption for bot tokens ─────────────────────────────────────────
