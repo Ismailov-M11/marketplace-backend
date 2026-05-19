@@ -6,7 +6,8 @@ from aiogram import Bot
 from aiogram.types import Update
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.openapi.docs import get_swagger_ui_html
 
 from app.core.database import engine
 from app.core.exceptions import AppException
@@ -35,10 +36,53 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Marketplace Bot Platform API",
     version="0.1.0",
-    docs_url="/docs" if settings.is_development else None,
-    redoc_url="/redoc" if settings.is_development else None,
+    docs_url=None,
+    redoc_url=None,
     lifespan=lifespan,
 )
+
+if settings.is_development:
+    @app.get("/docs", include_in_schema=False)
+    async def custom_swagger_ui():
+        return HTMLResponse("""<!DOCTYPE html>
+<html>
+<head>
+  <title>Marketplace API</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist/swagger-ui-dark.css">
+  <style>
+    body { margin: 0; background: #1a1a2e; }
+    .swagger-ui .topbar { background: #16213e; padding: 8px 0; }
+    .swagger-ui .topbar .download-url-wrapper { display: none; }
+    .swagger-ui .topbar-wrapper .link { display: flex; align-items: center; gap: 10px; }
+    .swagger-ui .topbar-wrapper .link::before {
+      content: "🛍 Marketplace API";
+      color: #fff;
+      font-size: 18px;
+      font-weight: bold;
+      font-family: sans-serif;
+    }
+    .swagger-ui .topbar-wrapper img { display: none; }
+  </style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+  <script>
+    SwaggerUIBundle({
+      url: "/openapi.json",
+      dom_id: "#swagger-ui",
+      presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+      layout: "StandaloneLayout",
+      deepLinking: true,
+      persistAuthorization: true,
+    })
+  </script>
+</body>
+</html>""")
 
 # CORS
 app.add_middleware(
@@ -71,7 +115,7 @@ async def generic_exception_handler(request: Request, exc: Exception):
 
 # ── Routers ───────────────────────────────────────────────────────────────────
 
-from app.api.public import health, applications as pub_applications, setup as pub_setup
+from app.api.public import health, applications as pub_applications
 from app.api.admin import auth as admin_auth, applications as admin_apps, sellers, bots
 from app.api.seller import auth as seller_auth, catalog, orders, settings as seller_settings, dashboard
 from app.api.miniapp import auth as miniapp_auth, catalog as miniapp_catalog, cart as miniapp_cart, checkout as miniapp_checkout, orders as miniapp_orders
@@ -81,7 +125,6 @@ PREFIX = "/api/v1"
 # Public
 app.include_router(health.router, prefix=f"{PREFIX}/public", tags=["Public"])
 app.include_router(pub_applications.router, prefix=f"{PREFIX}/public", tags=["Public"])
-app.include_router(pub_setup.router, prefix=f"{PREFIX}/public", tags=["Setup"])
 
 # Admin
 app.include_router(admin_auth.router, prefix=f"{PREFIX}/admin/auth", tags=["Admin Auth"])
