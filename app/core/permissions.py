@@ -1,3 +1,4 @@
+import structlog
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
@@ -12,6 +13,7 @@ from app.core.security import decode_token
 from app.models.admin_user import AdminUser
 from app.models.seller import Seller, SellerUser
 
+log = structlog.get_logger()
 security = HTTPBearer(auto_error=False)
 
 PERMISSIONS: dict[str, list[str]] = {
@@ -53,7 +55,8 @@ async def _get_token(credentials: HTTPAuthorizationCredentials | None = Depends(
         raise UnauthorizedError("Missing auth token")
     try:
         return decode_token(credentials.credentials)
-    except JWTError:
+    except JWTError as e:
+        log.warning("jwt_decode_failed", error_type=type(e).__name__, error=str(e))
         raise UnauthorizedError("Invalid or expired token")
 
 
