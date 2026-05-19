@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 from sqlalchemy import BigInteger, Boolean, ForeignKey, Integer, JSON, String, Text
 from sqlalchemy import DateTime
@@ -49,7 +50,7 @@ class Product(SoftDeleteMixin, TimestampMixin, Base):
     sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     attributes: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
 
-    category: Mapped["Category | None"] = relationship("Category", back_populates="products")
+    category: Mapped[Optional["Category"]] = relationship("Category", back_populates="products")
     variants: Mapped[list["ProductVariant"]] = relationship("ProductVariant", back_populates="product")
     images: Mapped[list["ProductImage"]] = relationship(
         "ProductImage", back_populates="product", order_by="ProductImage.sort_order"

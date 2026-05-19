@@ -30,9 +30,9 @@ def needs_rehash(hashed: str) -> bool:
 
 # ── JWT ──────────────────────────────────────────────────────────────────────
 
-def create_access_token(payload: dict) -> str:
+def create_access_token(payload: dict, expires_delta: timedelta | None = None) -> str:
     data = payload.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES))
     data.update({"exp": expire, "iat": datetime.now(timezone.utc), "jti": str(uuid.uuid4())})
     return jwt.encode(data, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 

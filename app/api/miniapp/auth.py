@@ -107,14 +107,16 @@ async def miniapp_init(payload: InitPayload, db: DB):
     settings_result = await db.execute(select(BotSettings).where(BotSettings.bot_id == bot.id))
     bot_settings = settings_result.scalar_one_or_none()
 
-    jwt_token = create_access_token({
-        "sub": customer.id,
-        "type": "miniapp",
-        "customer_id": customer.id,
-        "seller_id": bot.seller_id,
-        "bot_id": bot.id,
-        "exp": datetime.now(timezone.utc) + timedelta(hours=2),
-    })
+    jwt_token = create_access_token(
+        {
+            "sub": customer.id,
+            "type": "miniapp",
+            "customer_id": customer.id,
+            "seller_id": bot.seller_id,
+            "bot_id": bot.id,
+        },
+        expires_delta=timedelta(hours=2),
+    )
 
     theme = {}
     if bot_settings:
@@ -197,12 +199,10 @@ async def dev_auth(payload: DevAuthPayload, db: DB):
     settings_result = await db.execute(select(BotSettings).where(BotSettings.bot_id == bot.id))
     bot_settings = settings_result.scalar_one_or_none()
 
-    from app.core.security import create_access_token
-    from datetime import timedelta
-    jwt_token = create_access_token({
-        "sub": customer.id, "type": "miniapp",
-        "customer_id": customer.id, "seller_id": bot.seller_id, "bot_id": bot.id,
-    })
+    jwt_token = create_access_token(
+        {"sub": customer.id, "type": "miniapp", "customer_id": customer.id, "seller_id": bot.seller_id, "bot_id": bot.id},
+        expires_delta=timedelta(hours=2),
+    )
 
     theme = {}
     if bot_settings:

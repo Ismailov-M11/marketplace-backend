@@ -9,7 +9,7 @@ from app.settings import settings
 def setup_logging() -> None:
     log_level = logging.DEBUG if settings.is_development else logging.INFO
 
-    shared_processors = [
+    shared_processors: list = [
         structlog.contextvars.merge_contextvars,
         structlog.stdlib.add_log_level,
         structlog.stdlib.add_logger_name,
@@ -18,12 +18,10 @@ def setup_logging() -> None:
     ]
 
     if settings.is_development:
-        processors = shared_processors + [
-            structlog.dev.ConsoleRenderer(),
-        ]
+        processors = shared_processors + [structlog.dev.ConsoleRenderer()]
     else:
         processors = shared_processors + [
-            structlog.processors.dict_tracebacks,
+            structlog.processors.format_exc_info,
             structlog.processors.JSONRenderer(),
         ]
 
@@ -31,7 +29,7 @@ def setup_logging() -> None:
         processors=processors,
         wrapper_class=structlog.make_filtering_bound_logger(log_level),
         context_class=dict,
-        logger_factory=structlog.PrintLoggerFactory(),
+        logger_factory=structlog.stdlib.LoggerFactory(),
         cache_logger_on_first_use=True,
     )
 

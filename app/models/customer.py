@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Integer, JSON, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -27,7 +28,7 @@ class Customer(TimestampMixin, Base):
     metadata_: Mapped[dict] = mapped_column("metadata", JSON, default=dict, nullable=False)
 
     addresses: Mapped[list["CustomerAddress"]] = relationship("CustomerAddress", back_populates="customer")
-    cart: Mapped["Cart | None"] = relationship("Cart", back_populates="customer", uselist=False)
+    cart: Mapped[Optional["Cart"]] = relationship("Cart", back_populates="customer", uselist=False)
 
 
 class CustomerAddress(SoftDeleteMixin, Base):

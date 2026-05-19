@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 from sqlalchemy import ARRAY, BigInteger, Boolean, DateTime, ForeignKey, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -26,7 +27,7 @@ class Bot(TimestampMixin, Base):
     notification_chat_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
 
     seller: Mapped["Seller"] = relationship("Seller", back_populates="bots")
-    settings: Mapped["BotSettings | None"] = relationship("BotSettings", back_populates="bot", uselist=False)
+    settings: Mapped[Optional["BotSettings"]] = relationship("BotSettings", back_populates="bot", uselist=False)
 
 
 class BotSettings(Base):
