@@ -1,5 +1,9 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+import json
 from functools import lru_cache
+from typing import Any
+
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 def _fix_db_url(url: str) -> str:
@@ -19,6 +23,22 @@ class Settings(BaseSettings):
     APP_SECRET_KEY: str = "change-me"
     APP_DEBUG: bool = False
     APP_ALLOWED_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:5173"]
+
+    @field_validator("APP_ALLOWED_ORIGINS", mode="before")
+    @classmethod
+    def parse_origins(cls, v: Any) -> list[str]:
+        if isinstance(v, list):
+            return v
+        if isinstance(v, str):
+            v = v.strip()
+            if not v:
+                return []
+            # Try JSON array first: ["url1","url2"]
+            if v.startswith("["):
+                return json.loads(v)
+            # Fallback: comma-separated string
+            return [o.strip() for o in v.split(",") if o.strip()]
+        return v
 
     # Database — raw value from env, converted via property below
     DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost:5432/marketplace"
