@@ -471,32 +471,35 @@ def upgrade() -> None:
     )
 
     # ── FTS trigger for products ─────────────────────────────────────────────
+    op.execute("ALTER TABLE products ADD COLUMN IF NOT EXISTS search_vector tsvector")
+
+    op.execute("CREATE INDEX IF NOT EXISTS idx_products_search ON products USING GIN(search_vector)")
+
     op.execute("""
-    ALTER TABLE products ADD COLUMN IF NOT EXISTS search_vector tsvector;
-    CREATE INDEX IF NOT EXISTS idx_products_search ON products USING GIN(search_vector);
+CREATE OR REPLACE FUNCTION products_search_vector_trigger() RETURNS trigger AS $$
+BEGIN
+  NEW.search_vector :=
+    setweight(to_tsvector('simple', coalesce(NEW.name_uz,'')), 'A') ||
+    setweight(to_tsvector('simple', coalesce(NEW.name_ru,'')), 'A') ||
+    setweight(to_tsvector('simple', coalesce(NEW.description_uz,'')), 'B') ||
+    setweight(to_tsvector('simple', coalesce(NEW.description_ru,'')), 'B');
+  RETURN NEW;
+END
+$$ LANGUAGE plpgsql
+""")
 
-    CREATE OR REPLACE FUNCTION products_search_vector_trigger() RETURNS trigger AS $$
-    BEGIN
-      NEW.search_vector :=
-        setweight(to_tsvector('simple', coalesce(NEW.name_uz,'')), 'A') ||
-        setweight(to_tsvector('simple', coalesce(NEW.name_ru,'')), 'A') ||
-        setweight(to_tsvector('simple', coalesce(NEW.description_uz,'')), 'B') ||
-        setweight(to_tsvector('simple', coalesce(NEW.description_ru,'')), 'B');
-      RETURN NEW;
-    END
-    $$ LANGUAGE plpgsql;
-
-    CREATE TRIGGER products_search_vector_update
-    BEFORE INSERT OR UPDATE ON products
-    FOR EACH ROW EXECUTE FUNCTION products_search_vector_trigger();
-    """)
+    op.execute("""
+CREATE TRIGGER products_search_vector_update
+BEFORE INSERT OR UPDATE ON products
+FOR EACH ROW EXECUTE FUNCTION products_search_vector_trigger()
+""")
 
     # ── updated_at trigger ───────────────────────────────────────────────────
     op.execute("""
-    CREATE OR REPLACE FUNCTION set_updated_at() RETURNS trigger AS $$
-    BEGIN NEW.updated_at = NOW(); RETURN NEW; END
-    $$ LANGUAGE plpgsql;
-    """)
+CREATE OR REPLACE FUNCTION set_updated_at() RETURNS trigger AS $$
+BEGIN NEW.updated_at = NOW(); RETURN NEW; END
+$$ LANGUAGE plpgsql
+""")
 
 
 def downgrade() -> None:
