@@ -44,7 +44,7 @@ async def admin_login(body: LoginRequest, request: Request, response: Response, 
     )
 
     access_token = create_access_token({
-        "sub": user.id, "type": "admin", "role": user.role
+        "sub": str(user.id), "type": "admin", "role": user.role
     })
     raw_refresh, hashed_refresh = create_refresh_token()
 
@@ -101,7 +101,7 @@ async def admin_refresh(request: Request, response: Response, db: DB):
     if not user:
         raise UnauthorizedError("User not found")
 
-    access_token = create_access_token({"sub": user.id, "type": "admin", "role": user.role})
+    access_token = create_access_token({"sub": str(user.id), "type": "admin", "role": user.role})
     new_raw, new_hashed = create_refresh_token()
 
     db.add(RefreshToken(

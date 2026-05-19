@@ -66,7 +66,7 @@ async def current_admin_user(
 ) -> AdminUser:
     if payload.get("type") != "admin":
         raise ForbiddenError("Admin access required")
-    user_id = payload.get("sub")
+    user_id = int(payload.get("sub"))
     result = await db.execute(select(AdminUser).where(AdminUser.id == user_id, AdminUser.is_active == True))
     user = result.scalar_one_or_none()
     if not user:
@@ -80,7 +80,7 @@ async def current_seller_user(
 ) -> SellerUser:
     if payload.get("type") != "seller":
         raise ForbiddenError("Seller access required")
-    user_id = payload.get("sub")
+    user_id = int(payload.get("sub"))
     result = await db.execute(
         select(SellerUser).where(SellerUser.id == user_id, SellerUser.is_active == True)
     )

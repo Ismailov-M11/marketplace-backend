@@ -109,7 +109,7 @@ async def miniapp_init(payload: InitPayload, db: DB):
 
     jwt_token = create_access_token(
         {
-            "sub": customer.id,
+            "sub": str(customer.id),
             "type": "miniapp",
             "customer_id": customer.id,
             "seller_id": bot.seller_id,
@@ -170,7 +170,7 @@ async def dev_auth(payload: DevAuthPayload, db: DB):
         # Return a minimal mock response if no bot exists in dev DB
         from app.core.security import create_access_token
         token = create_access_token({
-            "sub": 0, "type": "miniapp",
+            "sub": "0", "type": "miniapp",
             "customer_id": 0, "seller_id": 0, "bot_id": payload.bot_id,
         })
         return {
@@ -200,7 +200,7 @@ async def dev_auth(payload: DevAuthPayload, db: DB):
     bot_settings = settings_result.scalar_one_or_none()
 
     jwt_token = create_access_token(
-        {"sub": customer.id, "type": "miniapp", "customer_id": customer.id, "seller_id": bot.seller_id, "bot_id": bot.id},
+        {"sub": str(customer.id), "type": "miniapp", "customer_id": customer.id, "seller_id": bot.seller_id, "bot_id": bot.id},
         expires_delta=timedelta(hours=2),
     )
 

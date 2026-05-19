@@ -34,7 +34,7 @@ async def seller_login(body: LoginRequest, request: Request, response: Response,
     )
 
     access_token = create_access_token({
-        "sub": user.id, "type": "seller", "role": user.role, "seller_id": user.seller_id
+        "sub": str(user.id), "type": "seller", "role": user.role, "seller_id": user.seller_id
     })
     raw_refresh, hashed_refresh = create_refresh_token()
 
@@ -89,7 +89,7 @@ async def seller_refresh(request: Request, response: Response, db: DB):
         raise UnauthorizedError("User not found")
 
     access_token = create_access_token({
-        "sub": user.id, "type": "seller", "role": user.role, "seller_id": user.seller_id
+        "sub": str(user.id), "type": "seller", "role": user.role, "seller_id": user.seller_id
     })
     new_raw, new_hashed = create_refresh_token()
 
