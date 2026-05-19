@@ -39,9 +39,6 @@ class Settings(BaseSettings):
     # Encryption
     BOT_TOKEN_ENCRYPTION_KEY: str = ""
 
-    # Telegram
-    PLATFORM_BOT_TOKEN: str = ""
-
     # S3
     S3_ENDPOINT_URL: str = ""
     S3_ACCESS_KEY: str = ""
