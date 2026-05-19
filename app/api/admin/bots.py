@@ -51,8 +51,7 @@ async def set_webhook(bot_id: int, db: DB, admin: CurrentAdmin):
 
     token = decrypt_token(bot.token_encrypted)
     from app.settings import settings
-    base_url = settings.allowed_origins[0] if settings.allowed_origins else "https://api.marketplace.uz"
-    webhook_url = f"{base_url}/webhook/{bot.id}/{bot.webhook_secret}"
+    webhook_url = f"{settings.backend_url_clean}/webhook/{bot.id}/{bot.webhook_secret}"
 
     async with httpx.AsyncClient() as client:
         resp = await client.post(
@@ -74,8 +73,7 @@ async def rotate_webhook_secret(bot_id: int, db: DB, admin: CurrentAdmin):
     token = decrypt_token(bot.token_encrypted)
 
     from app.settings import settings
-    base_url = settings.allowed_origins[0] if settings.allowed_origins else "https://api.marketplace.uz"
-    new_url = f"{base_url}/webhook/{bot.id}/{new_secret}"
+    new_url = f"{settings.backend_url_clean}/webhook/{bot.id}/{new_secret}"
 
     async with httpx.AsyncClient() as client:
         await client.post(

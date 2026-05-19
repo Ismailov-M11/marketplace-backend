@@ -107,7 +107,6 @@ async def approve_application(
     # Encrypt and save bot
     webhook_secret = generate_webhook_secret()
     from app.settings import settings
-    webhook_url = f"https://{(settings.allowed_origins[0] if settings.allowed_origins else 'api.marketplace.uz').replace('http://', '').replace('https://', '')}/webhook/{0}/{webhook_secret}"
 
     bot = Bot(
         seller_id=seller.id,
@@ -116,14 +115,13 @@ async def approve_application(
         title=bot_info["first_name"],
         token_encrypted=encrypt_token(body.telegram_token),
         webhook_secret=webhook_secret,
-        webhook_url=webhook_url,
+        webhook_url="",
         is_active=True,
     )
     db.add(bot)
     await db.flush()
 
-    # Fix webhook URL with real bot id
-    bot.webhook_url = f"/webhook/{bot.id}/{webhook_secret}"
+    bot.webhook_url = f"{settings.backend_url_clean}/webhook/{bot.id}/{webhook_secret}"
 
     # Default bot settings
     db.add(BotSettings(
@@ -148,11 +146,9 @@ async def approve_application(
     # Register webhook in background (don't fail if Telegram is down)
     try:
         async with httpx.AsyncClient() as client:
-            from app.settings import settings as s
-            base_url = s.allowed_origins[0] if s.allowed_origins else "https://api.marketplace.uz"
             await client.post(
                 f"https://api.telegram.org/bot{body.telegram_token}/setWebhook",
-                json={"url": f"{base_url}/webhook/{bot.id}/{webhook_secret}", "secret_token": webhook_secret},
+                json={"url": bot.webhook_url, "secret_token": webhook_secret},
             )
     except Exception:
         pass

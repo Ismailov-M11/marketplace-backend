@@ -54,6 +54,14 @@ class Settings(BaseSettings):
     # Cookies — set SECURE_COOKIES=true on Railway (HTTPS) so cookies work cross-origin
     SECURE_COOKIES: bool = False
 
+    # Public backend URL — used for Telegram webhook registration
+    # Set to e.g. https://marketplace-backend-production-d07b.up.railway.app on Railway
+    BACKEND_URL: str = "http://localhost:8000"
+
+    @property
+    def backend_url_clean(self) -> str:
+        return self.BACKEND_URL.rstrip("/")
+
     # Encryption
     BOT_TOKEN_ENCRYPTION_KEY: str = ""
 
