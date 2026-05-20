@@ -243,7 +243,10 @@ async def upload_product_image(
         select(func.count()).where(ProductImage.product_id == product_id)
     )).scalar() or 0
 
-    from app.core.storage import upload_image
+    from app.core.storage import upload_image, is_storage_configured
+    from app.core.exceptions import BadRequestError
+    if not is_storage_configured():
+        raise BadRequestError("S3 storage is not configured on the server")
     data = await file.read()
     url, thumb_url = await upload_image(data)
 

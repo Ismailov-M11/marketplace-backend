@@ -38,7 +38,13 @@ def _sync_delete(key: str) -> None:
         pass
 
 
+def is_storage_configured() -> bool:
+    return bool(settings.S3_ACCESS_KEY and settings.S3_SECRET_KEY and settings.S3_PUBLIC_URL)
+
+
 async def upload_image(data: bytes, folder: str = "products") -> tuple[str, str]:
+    if not is_storage_configured():
+        raise RuntimeError("S3 storage is not configured. Set S3_ACCESS_KEY, S3_SECRET_KEY, S3_PUBLIC_URL in environment.")
     name = uuid.uuid4().hex
     img = Image.open(io.BytesIO(data)).convert("RGB")
 
