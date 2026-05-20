@@ -9,7 +9,7 @@ from app.models.product import Category, Product, ProductImage, ProductVariant
 from app.schemas.common import PaginatedResponse
 from app.schemas.product import (
     CategoryCreate, CategoryOut, CategoryUpdate,
-    ProductCreate, ProductListOut, ProductOut, ProductUpdate,
+    ProductCreate, ProductImageOut, ProductListOut, ProductOut, ProductUpdate,
     VariantCreate, VariantOut, VariantUpdate,
 )
 
@@ -222,3 +222,56 @@ async def update_variant(product_id: int, variant_id: int, body: VariantUpdate, 
     for field, value in body.model_dump(exclude_none=True).items():
         setattr(variant, field, value)
     return variant
+
+
+# ── Product Images ────────────────────────────────────────────────────────────
+
+@router.post("/products/{product_id}/images", response_model=ProductImageOut, status_code=status.HTTP_201_CREATED)
+async def upload_product_image(
+    product_id: int,
+    db: DB,
+    seller: CurrentSeller,
+    file: UploadFile = File(...),
+):
+    result = await db.execute(
+        select(Product).where(Product.id == product_id, Product.seller_id == seller.id, Product.deleted_at.is_(None))
+    )
+    if not result.scalar_one_or_none():
+        raise NotFoundError("Product not found")
+
+    count = (await db.execute(
+        select(func.count()).where(ProductImage.product_id == product_id)
+    )).scalar() or 0
+
+    from app.core.storage import upload_image
+    data = await file.read()
+    url, thumb_url = await upload_image(data)
+
+    image = ProductImage(
+        product_id=product_id,
+        seller_id=seller.id,
+        url=url,
+        thumb_url=thumb_url,
+        sort_order=count,
+    )
+    db.add(image)
+    await db.flush()
+    await db.refresh(image)
+    return image
+
+
+@router.delete("/products/{product_id}/images/{image_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_product_image(product_id: int, image_id: int, db: DB, seller: CurrentSeller):
+    result = await db.execute(
+        select(ProductImage).where(
+            ProductImage.id == image_id,
+            ProductImage.product_id == product_id,
+            ProductImage.seller_id == seller.id,
+        )
+    )
+    img = result.scalar_one_or_none()
+    if not img:
+        raise NotFoundError("Image not found")
+    from app.core.storage import delete_image_by_url
+    await delete_image_by_url(img.url)
+    await db.delete(img)
