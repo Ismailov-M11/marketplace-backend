@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Query, UploadFile, File, status
 from sqlalchemy import func, select
+from sqlalchemy.orm import selectinload
 from slugify import slugify
 
 from app.api.deps import DB, CurrentSeller, CurrentSellerUser, Paginate
@@ -125,14 +126,20 @@ async def create_product(body: ProductCreate, db: DB, seller: CurrentSeller):
         ))
 
     await db.flush()
-    await db.refresh(product)
-    return product
+    result2 = await db.execute(
+        select(Product)
+        .options(selectinload(Product.variants), selectinload(Product.images))
+        .where(Product.id == product.id)
+    )
+    return result2.scalar_one()
 
 
 @router.get("/products/{product_id}", response_model=ProductOut)
 async def get_product(product_id: int, db: DB, seller: CurrentSeller):
     result = await db.execute(
-        select(Product).where(Product.id == product_id, Product.seller_id == seller.id, Product.deleted_at.is_(None))
+        select(Product)
+        .options(selectinload(Product.variants), selectinload(Product.images))
+        .where(Product.id == product_id, Product.seller_id == seller.id, Product.deleted_at.is_(None))
     )
     product = result.scalar_one_or_none()
     if not product:
@@ -143,7 +150,9 @@ async def get_product(product_id: int, db: DB, seller: CurrentSeller):
 @router.patch("/products/{product_id}", response_model=ProductOut)
 async def update_product(product_id: int, body: ProductUpdate, db: DB, seller: CurrentSeller):
     result = await db.execute(
-        select(Product).where(Product.id == product_id, Product.seller_id == seller.id, Product.deleted_at.is_(None))
+        select(Product)
+        .options(selectinload(Product.variants), selectinload(Product.images))
+        .where(Product.id == product_id, Product.seller_id == seller.id, Product.deleted_at.is_(None))
     )
     product = result.scalar_one_or_none()
     if not product:
