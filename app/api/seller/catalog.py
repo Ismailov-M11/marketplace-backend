@@ -86,7 +86,12 @@ async def list_products(
         stmt = stmt.where(Product.is_active == is_active)
 
     total = (await db.execute(select(func.count()).select_from(stmt.subquery()))).scalar() or 0
-    stmt = stmt.order_by(Product.sort_order, Product.created_at.desc()).offset(pagination.offset).limit(pagination.limit)
+    stmt = (
+        stmt.options(selectinload(Product.variants), selectinload(Product.images))
+        .order_by(Product.sort_order, Product.created_at.desc())
+        .offset(pagination.offset)
+        .limit(pagination.limit)
+    )
     result = await db.execute(stmt)
     items = result.scalars().all()
 
