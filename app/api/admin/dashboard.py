@@ -16,7 +16,7 @@ async def get_dashboard_stats(db: DB, admin: CurrentAdmin):
     today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
 
     active_sellers = (await db.execute(
-        select(func.count()).where(Seller.is_active == True)
+        select(func.count()).where(Seller.status == "active", Seller.deleted_at.is_(None))
     )).scalar() or 0
 
     active_bots = (await db.execute(
