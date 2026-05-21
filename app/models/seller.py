@@ -34,6 +34,12 @@ class SellerApplication(TimestampMixin, Base):
     mfo: Mapped[str | None] = mapped_column(String(10), nullable=True)
     account_number: Mapped[str | None] = mapped_column(String(30), nullable=True)
     oked: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    # Initial catalog + product submitted with application
+    initial_catalog_name: Mapped[str | None] = mapped_column(Text, nullable=True)
+    initial_product_name: Mapped[str | None] = mapped_column(Text, nullable=True)
+    initial_product_description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    initial_product_price: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    initial_product_image: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class Seller(SoftDeleteMixin, TimestampMixin, Base):

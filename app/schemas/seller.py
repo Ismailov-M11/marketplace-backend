@@ -1,8 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import Annotated
 
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, Field, computed_field, field_validator
 import re
 
 
@@ -36,6 +35,12 @@ class ApplicationCreate(BaseModel):
     description: str | None = None
     monthly_orders: str | None = None
     referrer: str | None = None
+    # Initial catalog + product (step 3)
+    initial_catalog_name: str | None = None
+    initial_product_name: str | None = None
+    initial_product_description: str | None = None
+    initial_product_price: int | None = None  # tiyins (sum * 100)
+    initial_product_image: str | None = None
 
     @field_validator("inn")
     @classmethod
@@ -61,18 +66,38 @@ class ApplicationCreate(BaseModel):
 class ApplicationOut(BaseModel):
     id: int
     status: str
+    # Personal
     full_name: str
     phone: str
     email: str
+    # Shop
     company_name: str
-    inn: str
     category: str | None
     desired_usernames: list[str]
+    description: str | None
+    monthly_orders: str | None
+    referrer: str | None
+    business_type: str | None
+    # Legal
+    inn: str
+    legal_name: str | None
+    mfo: str | None
+    account_number: str | None
+    oked: str | None
+    # Meta
+    rejected_reason: str | None
     created_at: datetime
     reviewed_at: datetime | None
     seller_id: int | None
 
+    password_hash: str | None = Field(None, exclude=True)
+
     model_config = {"from_attributes": True}
+
+    @computed_field
+    @property
+    def has_password(self) -> bool:
+        return bool(self.password_hash)
 
 
 class ApplicationApprove(BaseModel):
@@ -94,9 +119,13 @@ class SellerOut(BaseModel):
     inn: str
     phone: str
     email: str
+    legal_address: str | None
     status: str
     plan: str
+    plan_expires_at: datetime | None
     commission_pct: Decimal
+    suspended_reason: str | None
+    application_id: int | None
     created_at: datetime
 
     model_config = {"from_attributes": True}

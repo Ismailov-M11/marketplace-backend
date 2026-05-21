@@ -143,6 +143,51 @@ async def approve_application(
         delivery_fee=0,
     ))
 
+    # Create initial catalog + product if submitted with application
+    if app.initial_catalog_name and app.initial_product_name:
+        import re
+        from app.models.product import Category, Product, ProductVariant, ProductImage
+
+        cat_slug = re.sub(r"[^a-z0-9]+", "-", app.initial_catalog_name.lower().strip()).strip("-") or "catalog"
+        category = Category(
+            seller_id=seller.id,
+            name_uz=app.initial_catalog_name,
+            name_ru=app.initial_catalog_name,
+            slug=cat_slug,
+            is_active=True,
+        )
+        db.add(category)
+        await db.flush()
+
+        product = Product(
+            seller_id=seller.id,
+            category_id=category.id,
+            name_uz=app.initial_product_name,
+            name_ru=app.initial_product_name,
+            description_uz=app.initial_product_description,
+            description_ru=app.initial_product_description,
+            is_active=True,
+        )
+        db.add(product)
+        await db.flush()
+
+        db.add(ProductVariant(
+            product_id=product.id,
+            seller_id=seller.id,
+            price=app.initial_product_price or 0,
+            stock_quantity=0,
+            is_default=True,
+            is_active=True,
+        ))
+
+        if app.initial_product_image:
+            db.add(ProductImage(
+                product_id=product.id,
+                seller_id=seller.id,
+                url=app.initial_product_image,
+                sort_order=0,
+            ))
+
     # Update application
     app.status = "approved"
     app.seller_id = seller.id

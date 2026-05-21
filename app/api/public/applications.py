@@ -30,6 +30,11 @@ async def submit_application(body: ApplicationCreate, db: DB) -> dict:
         description=body.description,
         monthly_orders=body.monthly_orders,
         referrer=body.referrer,
+        initial_catalog_name=body.initial_catalog_name,
+        initial_product_name=body.initial_product_name,
+        initial_product_description=body.initial_product_description,
+        initial_product_price=body.initial_product_price,
+        initial_product_image=body.initial_product_image,
     )
     db.add(app_obj)
     await db.flush()
