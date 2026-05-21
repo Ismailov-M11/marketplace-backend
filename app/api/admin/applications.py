@@ -144,12 +144,13 @@ async def approve_application(
     ))
 
     # Create initial catalog + product if submitted with application
-    if app.initial_catalog_name_uz and app.initial_product_name_uz:
+    d = app.initial_data or {}
+    if d.get("catalog_name_uz") and d.get("product_name_uz"):
         import re
         from app.models.product import Category, Product, ProductVariant, ProductImage
 
-        cat_name_uz = app.initial_catalog_name_uz
-        cat_name_ru = app.initial_catalog_name_ru or cat_name_uz
+        cat_name_uz = d["catalog_name_uz"]
+        cat_name_ru = d.get("catalog_name_ru") or cat_name_uz
         cat_slug = re.sub(r"[^a-z0-9]+", "-", cat_name_ru.lower().strip()).strip("-") or "catalog"
         category = Category(
             seller_id=seller.id,
@@ -164,18 +165,18 @@ async def approve_application(
         product = Product(
             seller_id=seller.id,
             category_id=category.id,
-            name_uz=app.initial_product_name_uz,
-            name_ru=app.initial_product_name_ru or app.initial_product_name_uz,
-            description_uz=app.initial_product_description_uz,
-            description_ru=app.initial_product_description_ru or app.initial_product_description_uz,
-            sku=app.initial_product_sku,
-            is_featured=bool(app.initial_product_is_featured),
+            name_uz=d["product_name_uz"],
+            name_ru=d.get("product_name_ru") or d["product_name_uz"],
+            description_uz=d.get("product_description_uz"),
+            description_ru=d.get("product_description_ru") or d.get("product_description_uz"),
+            sku=d.get("product_sku"),
+            is_featured=bool(d.get("product_is_featured", False)),
             is_active=True,
         )
         db.add(product)
         await db.flush()
 
-        variants = app.initial_product_variants or []
+        variants = d.get("product_variants") or []
         for idx, v in enumerate(variants):
             db.add(ProductVariant(
                 product_id=product.id,
@@ -192,11 +193,11 @@ async def approve_application(
                 sort_order=idx,
             ))
 
-        if app.initial_product_image:
+        if d.get("product_image"):
             db.add(ProductImage(
                 product_id=product.id,
                 seller_id=seller.id,
-                url=app.initial_product_image,
+                url=d["product_image"],
                 sort_order=0,
             ))
 

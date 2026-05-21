@@ -27,6 +27,26 @@ async def upload_application_image(file: UploadFile = File(...)) -> dict:
 
 @router.post("/applications", status_code=status.HTTP_201_CREATED)
 async def submit_application(body: ApplicationCreate, db: DB) -> dict:
+    initial_data = None
+    if any([
+        body.initial_catalog_name_uz,
+        body.initial_catalog_name_ru,
+        body.initial_product_name_uz,
+        body.initial_product_name_ru,
+    ]):
+        initial_data = {
+            "catalog_name_uz": body.initial_catalog_name_uz,
+            "catalog_name_ru": body.initial_catalog_name_ru,
+            "product_name_uz": body.initial_product_name_uz,
+            "product_name_ru": body.initial_product_name_ru,
+            "product_description_uz": body.initial_product_description_uz,
+            "product_description_ru": body.initial_product_description_ru,
+            "product_sku": body.initial_product_sku,
+            "product_is_featured": body.initial_product_is_featured,
+            "product_image": body.initial_product_image,
+            "product_variants": body.initial_product_variants,
+        }
+
     app_obj = SellerApplication(
         status="pending",
         full_name=body.full_name,
@@ -45,16 +65,7 @@ async def submit_application(body: ApplicationCreate, db: DB) -> dict:
         description=body.description,
         monthly_orders=body.monthly_orders,
         referrer=body.referrer,
-        initial_catalog_name_uz=body.initial_catalog_name_uz,
-        initial_catalog_name_ru=body.initial_catalog_name_ru,
-        initial_product_name_uz=body.initial_product_name_uz,
-        initial_product_name_ru=body.initial_product_name_ru,
-        initial_product_description_uz=body.initial_product_description_uz,
-        initial_product_description_ru=body.initial_product_description_ru,
-        initial_product_sku=body.initial_product_sku,
-        initial_product_is_featured=body.initial_product_is_featured,
-        initial_product_image=body.initial_product_image,
-        initial_product_variants=body.initial_product_variants,
+        initial_data=initial_data,
     )
     db.add(app_obj)
     await db.flush()
