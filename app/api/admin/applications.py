@@ -144,15 +144,17 @@ async def approve_application(
     ))
 
     # Create initial catalog + product if submitted with application
-    if app.initial_catalog_name and app.initial_product_name:
+    if app.initial_catalog_name_uz and app.initial_product_name_uz:
         import re
         from app.models.product import Category, Product, ProductVariant, ProductImage
 
-        cat_slug = re.sub(r"[^a-z0-9]+", "-", app.initial_catalog_name.lower().strip()).strip("-") or "catalog"
+        cat_name_uz = app.initial_catalog_name_uz
+        cat_name_ru = app.initial_catalog_name_ru or cat_name_uz
+        cat_slug = re.sub(r"[^a-z0-9]+", "-", cat_name_ru.lower().strip()).strip("-") or "catalog"
         category = Category(
             seller_id=seller.id,
-            name_uz=app.initial_catalog_name,
-            name_ru=app.initial_catalog_name,
+            name_uz=cat_name_uz,
+            name_ru=cat_name_ru,
             slug=cat_slug,
             is_active=True,
         )
@@ -162,23 +164,33 @@ async def approve_application(
         product = Product(
             seller_id=seller.id,
             category_id=category.id,
-            name_uz=app.initial_product_name,
-            name_ru=app.initial_product_name,
-            description_uz=app.initial_product_description,
-            description_ru=app.initial_product_description,
+            name_uz=app.initial_product_name_uz,
+            name_ru=app.initial_product_name_ru or app.initial_product_name_uz,
+            description_uz=app.initial_product_description_uz,
+            description_ru=app.initial_product_description_ru or app.initial_product_description_uz,
+            sku=app.initial_product_sku,
+            is_featured=bool(app.initial_product_is_featured),
             is_active=True,
         )
         db.add(product)
         await db.flush()
 
-        db.add(ProductVariant(
-            product_id=product.id,
-            seller_id=seller.id,
-            price=app.initial_product_price or 0,
-            stock_quantity=0,
-            is_default=True,
-            is_active=True,
-        ))
+        variants = app.initial_product_variants or []
+        for idx, v in enumerate(variants):
+            db.add(ProductVariant(
+                product_id=product.id,
+                seller_id=seller.id,
+                name_uz=v.get("name_uz") or None,
+                name_ru=v.get("name_ru") or None,
+                sku=v.get("sku") or None,
+                price=int((v.get("price") or 0) * 100),
+                old_price=int(v["old_price"] * 100) if v.get("old_price") else None,
+                stock_quantity=int(v.get("stock_quantity") or 0),
+                track_stock=bool(v.get("track_stock", True)),
+                is_default=bool(v.get("is_default", idx == 0)),
+                is_active=True,
+                sort_order=idx,
+            ))
 
         if app.initial_product_image:
             db.add(ProductImage(

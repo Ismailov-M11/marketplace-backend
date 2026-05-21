@@ -36,11 +36,17 @@ class ApplicationCreate(BaseModel):
     monthly_orders: str | None = None
     referrer: str | None = None
     # Initial catalog + product (step 3)
-    initial_catalog_name: str | None = None
-    initial_product_name: str | None = None
-    initial_product_description: str | None = None
-    initial_product_price: int | None = None  # tiyins (sum * 100)
+    initial_catalog_name_uz: str | None = None
+    initial_catalog_name_ru: str | None = None
+    initial_product_name_uz: str | None = None
+    initial_product_name_ru: str | None = None
+    initial_product_description_uz: str | None = None
+    initial_product_description_ru: str | None = None
+    initial_product_sku: str | None = None
+    initial_product_is_featured: bool = False
     initial_product_image: str | None = None
+    # Each variant: {name_uz, name_ru, sku, price (sum), old_price, stock_quantity, track_stock, is_default}
+    initial_product_variants: list[dict] | None = None
 
     @field_validator("inn")
     @classmethod

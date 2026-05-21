@@ -1,13 +1,28 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, File, UploadFile, status
 from sqlalchemy import select
 
 from app.api.deps import DB
 from app.core.security import hash_password
+from app.core.storage import upload_image, is_storage_configured
+from app.core.exceptions import NotFoundError, BadRequestError
 from app.models.seller import SellerApplication
-from app.schemas.seller import ApplicationCreate, ApplicationOut
-from app.core.exceptions import NotFoundError
+from app.schemas.seller import ApplicationCreate
 
 router = APIRouter()
+
+
+@router.post("/upload-image")
+async def upload_application_image(file: UploadFile = File(...)) -> dict:
+    """Public endpoint — uploads an image for use in step 3 of the application form."""
+    if not is_storage_configured():
+        raise BadRequestError("File storage is not configured on this server")
+    if file.content_type not in ("image/jpeg", "image/png", "image/webp", "image/gif"):
+        raise BadRequestError("Only JPEG, PNG, WEBP or GIF images are accepted")
+    data = await file.read()
+    if len(data) > 10 * 1024 * 1024:
+        raise BadRequestError("Image must be under 10 MB")
+    url, _ = await upload_image(data, folder="applications")
+    return {"url": url}
 
 
 @router.post("/applications", status_code=status.HTTP_201_CREATED)
@@ -30,11 +45,16 @@ async def submit_application(body: ApplicationCreate, db: DB) -> dict:
         description=body.description,
         monthly_orders=body.monthly_orders,
         referrer=body.referrer,
-        initial_catalog_name=body.initial_catalog_name,
-        initial_product_name=body.initial_product_name,
-        initial_product_description=body.initial_product_description,
-        initial_product_price=body.initial_product_price,
+        initial_catalog_name_uz=body.initial_catalog_name_uz,
+        initial_catalog_name_ru=body.initial_catalog_name_ru,
+        initial_product_name_uz=body.initial_product_name_uz,
+        initial_product_name_ru=body.initial_product_name_ru,
+        initial_product_description_uz=body.initial_product_description_uz,
+        initial_product_description_ru=body.initial_product_description_ru,
+        initial_product_sku=body.initial_product_sku,
+        initial_product_is_featured=body.initial_product_is_featured,
         initial_product_image=body.initial_product_image,
+        initial_product_variants=body.initial_product_variants,
     )
     db.add(app_obj)
     await db.flush()

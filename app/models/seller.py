@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import ARRAY, BigInteger, Boolean, DateTime, ForeignKey, Numeric, String, Text
+from sqlalchemy import ARRAY, BigInteger, Boolean, DateTime, ForeignKey, JSON, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -35,11 +35,16 @@ class SellerApplication(TimestampMixin, Base):
     account_number: Mapped[str | None] = mapped_column(String(30), nullable=True)
     oked: Mapped[str | None] = mapped_column(String(10), nullable=True)
     # Initial catalog + product submitted with application
-    initial_catalog_name: Mapped[str | None] = mapped_column(Text, nullable=True)
-    initial_product_name: Mapped[str | None] = mapped_column(Text, nullable=True)
-    initial_product_description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    initial_product_price: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    initial_catalog_name_uz: Mapped[str | None] = mapped_column(Text, nullable=True)
+    initial_catalog_name_ru: Mapped[str | None] = mapped_column(Text, nullable=True)
+    initial_product_name_uz: Mapped[str | None] = mapped_column(Text, nullable=True)
+    initial_product_name_ru: Mapped[str | None] = mapped_column(Text, nullable=True)
+    initial_product_description_uz: Mapped[str | None] = mapped_column(Text, nullable=True)
+    initial_product_description_ru: Mapped[str | None] = mapped_column(Text, nullable=True)
+    initial_product_sku: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    initial_product_is_featured: Mapped[bool | None] = mapped_column(Boolean, nullable=True, default=False)
     initial_product_image: Mapped[str | None] = mapped_column(Text, nullable=True)
+    initial_product_variants: Mapped[list | None] = mapped_column(JSON, nullable=True)
 
 
 class Seller(SoftDeleteMixin, TimestampMixin, Base):
