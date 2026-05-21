@@ -28,6 +28,12 @@ class SellerApplication(TimestampMixin, Base):
     reviewed_by: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("admin_users.id"), nullable=True)
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     seller_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("sellers.id"), nullable=True)
+    # Legal & auth fields set during application
+    password_hash: Mapped[str | None] = mapped_column(Text, nullable=True)
+    legal_name: Mapped[str | None] = mapped_column(Text, nullable=True)
+    mfo: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    account_number: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    oked: Mapped[str | None] = mapped_column(String(10), nullable=True)
 
 
 class Seller(SoftDeleteMixin, TimestampMixin, Base):

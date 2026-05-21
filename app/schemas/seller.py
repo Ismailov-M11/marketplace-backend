@@ -24,7 +24,12 @@ class ApplicationCreate(BaseModel):
     phone: str
     email: EmailStr
     company_name: str
+    password: str
     inn: str
+    legal_name: str | None = None
+    mfo: str | None = None
+    account_number: str | None = None
+    oked: str | None = None
     business_type: str | None = None
     desired_usernames: list[str]
     category: str | None = None

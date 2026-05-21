@@ -91,16 +91,24 @@ async def approve_application(
     db.add(seller)
     await db.flush()
 
-    # Create owner user
-    temp_password = body.owner_password or generate_temp_password()
+    # Use password from application if available, otherwise admin-provided or temp
+    if app.password_hash and not body.owner_password:
+        owner_hash = app.password_hash
+        temp_password = None
+        must_change = False
+    else:
+        temp_password = body.owner_password or generate_temp_password()
+        owner_hash = hash_password(temp_password)
+        must_change = not bool(body.owner_password)
+
     owner = SellerUser(
         seller_id=seller.id,
         email=app.email,
         phone=app.phone,
         full_name=app.full_name,
-        password_hash=hash_password(temp_password),
+        password_hash=owner_hash,
         role="owner",
-        must_change_password=not bool(body.owner_password),
+        must_change_password=must_change,
     )
     db.add(owner)
 
@@ -156,7 +164,7 @@ async def approve_application(
     return {
         "seller_id": seller.id,
         "bot_id": bot.id,
-        "temp_password": temp_password if not body.owner_password else None,
+        "temp_password": temp_password,
         "message": "Application approved. Seller and bot created.",
     }
 

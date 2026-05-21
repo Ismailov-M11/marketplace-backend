@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, computed_field, field_validator
 
 
 class CategoryCreate(BaseModel):
@@ -148,3 +148,9 @@ class ProductListOut(BaseModel):
     images: list[ProductImageOut] = []
 
     model_config = {"from_attributes": True}
+
+    @computed_field
+    @property
+    def min_price(self) -> int:
+        prices = [v.price for v in self.variants if v.is_active]
+        return min(prices) if prices else 0

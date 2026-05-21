@@ -2,9 +2,9 @@ from fastapi import APIRouter, status
 from sqlalchemy import select
 
 from app.api.deps import DB
+from app.core.security import hash_password
 from app.models.seller import SellerApplication
 from app.schemas.seller import ApplicationCreate, ApplicationOut
-from app.schemas.common import MessageResponse
 from app.core.exceptions import NotFoundError
 
 router = APIRouter()
@@ -19,6 +19,11 @@ async def submit_application(body: ApplicationCreate, db: DB) -> dict:
         email=body.email,
         company_name=body.company_name,
         inn=body.inn,
+        legal_name=body.legal_name,
+        mfo=body.mfo,
+        account_number=body.account_number,
+        oked=body.oked,
+        password_hash=hash_password(body.password),
         business_type=body.business_type,
         desired_usernames=body.desired_usernames,
         category=body.category,
